@@ -12,6 +12,22 @@ import React, { useEffect, useRef, useState } from "react"
 import axios from "axios"
 import { TextGenerateEffect } from "../ui/text-generate-effect"
 
+// ─── Palette (Digital Heroes Theme) ──────────────────────────────────────────
+const C = {
+  canvas:     "#F2F1E8",   
+  surface:    "#FFFFFF",   
+  surfaceHigh:"#FAFAF8",   
+  border:     "#DCDAD2",   
+  borderSoft: "#EAEBEA",   
+  ink:        "#1A1D1A",   
+  inkMid:     "#6B7068",   
+  inkFaint:   "#A3A69F",   
+  brandSoft:  "#CDE0D4",   
+  done:       "#305341",   
+  inProgress: "#D99A4A",   
+  blockers:   "#C05746",   
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface StandupData {
@@ -25,44 +41,43 @@ interface StandupData {
 const SECTIONS: {
   key: keyof StandupData
   label: string
-  accent: string          // Tailwind border color
-  dot: string             // inline dot color
-  badge: string           // badge bg + text
+  color: string
 }[] = [
-  {
-    key: "done",
-    label: "Completed",
-    accent: "border-emerald-500/40",
-    dot: "#10b981",
-    badge: "bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20",
-  },
-  {
-    key: "inProgress",
-    label: "In Progress",
-    accent: "border-sky-500/40",
-    dot: "#38bdf8",
-    badge: "bg-sky-500/10 text-sky-400 ring-1 ring-sky-500/20",
-  },
-  {
-    key: "blockers",
-    label: "Blockers",
-    accent: "border-amber-500/40",
-    dot: "#f59e0b",
-    badge: "bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20",
-  },
+  { key: "done",       label: "Completed",   color: C.done       },
+  { key: "inProgress", label: "In Progress", color: C.inProgress },
+  { key: "blockers",   label: "Blockers",    color: C.blockers   },
 ]
+
+// ─── Spinner ──────────────────────────────────────────────────────────────────
+
+const Spinner = () => (
+  <svg
+    className="animate-spin"
+    width="14"
+    height="14"
+    viewBox="0 0 14 14"
+    fill="none"
+    style={{ marginLeft: "6px", flexShrink: 0 }}
+  >
+    <circle cx="7" cy="7" r="5.5" stroke={C.surface} strokeOpacity="0.3" strokeWidth="2" />
+    <path d="M7 1.5A5.5 5.5 0 0 1 12.5 7" stroke={C.surface} strokeWidth="2" strokeLinecap="round" />
+  </svg>
+)
 
 // ─── TextArea ─────────────────────────────────────────────────────────────────
 
 const TextArea = ({
   setStandup,
   setKey,
+  loading,
+  setLoading,
 }: {
   setStandup: (s: StandupData) => void
   setKey: (fn: (prev: number) => number) => void
+  loading: boolean
+  setLoading: (v: boolean) => void
 }) => {
   const [text, setText] = useState("")
-  const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -74,7 +89,6 @@ const TextArea = ({
       setKey((prev) => prev + 1)
       setText("")
     } catch (err: unknown) {
-      // Pull the error message the API sent back, or fall back to a generic one
       const msg =
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error
         ?? "Something went wrong. Try again."
@@ -86,41 +100,80 @@ const TextArea = ({
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <InputGroup className="w-full max-w-sm bg-background">
-        <InputGroupAddon align="block-start" className="border-b">
-          <InputGroupText className="font-medium font-mono">
-            <FileCodeIcon className="w-4 h-4" />
-            Enter your work
+    // Forced h-full on the form so it spans the entire grid row
+    <form onSubmit={handleSubmit} className="h-full flex flex-col">
+      <InputGroup
+        className="w-full h-full flex flex-col shadow-sm hover:shadow-md transition-shadow duration-300"
+        style={{
+          backgroundColor: C.surface, // Forced white background
+          border: `1px solid ${C.border}`,
+          borderRadius: "16px",
+          overflow: "hidden",
+        }}
+      >
+        <InputGroupAddon
+          align="block-start"
+          style={{ borderBottom: `1px solid ${C.borderSoft}`, backgroundColor: C.surfaceHigh }}
+          className="px-5 py-4 flex items-center shrink-0"
+        >
+          <InputGroupText
+            className="text-[11px] font-bold tracking-widest uppercase"
+            style={{ color: C.inkMid }}
+          >
+            <FileCodeIcon className="w-4 h-4 mr-2 inline-block" style={{ color: C.inkFaint }} />
+            Raw Notes
           </InputGroupText>
           <InputGroupButton
-            className="ml-auto"
+            className="ml-auto transition-opacity hover:opacity-70"
             type="button"
             size="icon-xs"
             onClick={() => setText("")}
+            style={{ color: C.inkMid }}
           >
-            <RefreshCwIcon className="w-3 h-3" />
+            <RefreshCwIcon className="w-4 h-4" />
           </InputGroupButton>
         </InputGroupAddon>
+
         <InputGroupTextarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="min-h-[500px]"
-          placeholder={`What did you work on today?\n\n- Fixed login bug\n- Working on dashboard\n- Blocked on API spec`}
+          className="flex-1 text-[15px] leading-relaxed resize-none font-medium h-full"
+          placeholder={`What did you work on today?\n\n- Fixed login bug\n- Building dashboard component\n- Blocked on API spec`}
+          style={{
+            backgroundColor: C.surface, // Hard override for the text area background
+            color: C.ink,
+            caretColor: C.done,
+            border: "none",
+            outline: "none",
+            padding: "24px",
+          }}
         />
-        <InputGroupAddon align="block-end" className="border-t">
-          <InputGroupText className="text-xs text-muted-foreground">
-            {text.length} chars
+
+        <InputGroupAddon
+          align="block-end"
+          style={{ borderTop: `1px solid ${C.borderSoft}`, backgroundColor: C.surfaceHigh }}
+          className="px-5 py-4 flex items-center justify-between shrink-0"
+        >
+          <InputGroupText className="text-xs font-semibold tracking-wide" style={{ color: C.inkFaint }}>
+            {text.length} characters
           </InputGroupText>
           <InputGroupButton
-            className="ml-auto"
+            className="text-xs font-bold tracking-wide flex items-center transition-all hover:scale-105 active:scale-95"
             type="submit"
             size="sm"
-            variant="default"
             disabled={loading || !text.trim()}
+            style={{
+              backgroundColor: C.done,
+              color: C.surface,
+              border: "none",
+              borderRadius: "9999px",
+              padding: "10px 24px",
+              opacity: loading || !text.trim() ? 0.5 : 1,
+              cursor: loading || !text.trim() ? "not-allowed" : "pointer",
+            }}
           >
             {loading ? "Generating…" : "Generate"}
-            <CornerDownLeftIcon className="w-3 h-3" />
+            {loading ? <Spinner /> : <CornerDownLeftIcon className="w-3.5 h-3.5 ml-2" />}
           </InputGroupButton>
         </InputGroupAddon>
       </InputGroup>
@@ -128,63 +181,59 @@ const TextArea = ({
   )
 }
 
-// ─── Section card ─────────────────────────────────────────────────────────────
+// ─── Section block ────────────────────────────────────────────────────────────
 
-const SectionCard = ({
+const SectionBlock = ({
   section,
   items,
   animKey,
-  delay,
+  isLast,
 }: {
   section: (typeof SECTIONS)[number]
   items: string[]
   animKey: number
-  delay: number
+  isLast: boolean
 }) => {
   return (
-    <div
-      className={`rounded-xl border ${section.accent} bg-muted/10 p-4 space-y-3`}
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      {/* Header */}
-      <div className="flex items-center gap-2">
-        {/* Dot */}
-        <span
-          className="w-2 h-2 rounded-full flex-shrink-0"
-          style={{ backgroundColor: section.dot, boxShadow: `0 0 6px ${section.dot}` }}
-        />
-        <span className={`text-[11px] font-semibold tracking-widest uppercase px-2 py-0.5 rounded-full ${section.badge}`}>
+    <div>
+      <div className="flex items-center gap-3 mb-5">
+        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: section.color }} />
+        <span className="text-[13px] font-bold tracking-widest uppercase" style={{ color: C.ink }}>
           {section.label}
         </span>
       </div>
-
-      {/* Divider */}
-      <div className={`h-px w-full ${section.accent} bg-current opacity-20`} />
-
-      {/* Items */}
-      <ul className="space-y-2">
+      <ul className="space-y-4 pl-2">
         {items.map((item, i) => (
-          <li key={`${animKey}-${i}`} className="flex gap-2.5 items-start">
-            <span
-              className="mt-[6px] w-1 h-1 rounded-full flex-shrink-0 opacity-60"
-              style={{ backgroundColor: section.dot }}
-            />
-            <span className="text-sm leading-relaxed text-foreground/85 font-mono">
+          <li key={`${animKey}-${i}`} className="flex gap-4 items-start">
+            <span className="mt-[8px] w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: section.color, opacity: 0.7 }} />
+            <span className="text-[15px] leading-relaxed font-semibold" style={{ color: C.ink }}>
               <TextGenerateEffect key={`${animKey}-${section.key}-${i}`} words={item} />
             </span>
           </li>
         ))}
       </ul>
+      {!isLast && <div className="mt-8 mb-8" style={{ height: "1px", backgroundColor: C.borderSoft }} />}
     </div>
   )
 }
 
-// ─── Placeholder ──────────────────────────────────────────────────────────────
+// ─── Loading & Placeholder ───────────────────────────────────────────────────
+
+const LoadingPane = () => (
+  <div className="h-full flex flex-col items-center justify-center gap-6 select-none">
+    <svg className="animate-spin" width="40" height="40" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="13" stroke={C.borderSoft} strokeWidth="3.5" />
+      <path d="M16 3A13 13 0 0 1 29 16" stroke={C.done} strokeWidth="3.5" strokeLinecap="round" />
+    </svg>
+    <p className="text-[13px] font-bold tracking-widest uppercase" style={{ color: C.inkMid }}>
+      Formatting standup…
+    </p>
+  </div>
+)
 
 const Placeholder = () => (
-  <div className="h-full flex flex-col items-center justify-center gap-3 text-muted-foreground/40 select-none">
-    <FileCodeIcon className="w-8 h-8" />
-    <p className="text-sm font-mono tracking-wide">
+  <div className="h-full flex flex-col items-center justify-center gap-2 select-none">
+    <p className="text-[13px] font-bold tracking-widest uppercase" style={{ color: C.inkFaint }}>
       Your standup will appear here
     </p>
   </div>
@@ -194,6 +243,7 @@ const Placeholder = () => (
 
 export const StandupUI = () => {
   const [standup, setStandup] = useState<StandupData | null>(null)
+  const [loading, setLoading] = useState(false)
   const [key, setKey] = useState(0)
   const rightRef = useRef<HTMLDivElement>(null)
 
@@ -202,51 +252,132 @@ export const StandupUI = () => {
   }, [key])
 
   return (
-    <div className="min-h-screen pt-25 pb-10 px-6 bg-background">
+    <div
+      className="h-screen w-full flex overflow-hidden relative"
+      style={{ 
+        backgroundColor: C.canvas,
+        // Aggressively force sans-serif to wipe out the serif font from your screenshot
+        fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+      }}
+    >
+      
+      {/* FLOATING CAPSULE NAVBAR */}
+      <nav className="absolute top-6 w-full flex justify-center z-50 pointer-events-none">
+        <div 
+          className="pointer-events-auto flex items-center p-1.5 rounded-full shadow-sm backdrop-blur-md"
+          style={{
+            backgroundColor: `${C.surfaceHigh}E6`, 
+            border: `1px solid ${C.border}`,
+          }}
+        >
+          <div 
+            className="px-6 py-2 rounded-full flex items-center gap-2 select-none"
+            style={{ backgroundColor: C.brandSoft }}
+          >
+            <span className="text-[30px] font-black tracking-tight" style={{ color: C.ink }}>
+              standupFlow.
+            </span>
+          </div>
 
-      {/* NAVBAR */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-6 h-14 flex items-center gap-2">
-          <span className="font-mono text-xs font-semibold tracking-widest uppercase text-muted-foreground">
-            Standup
-          </span>
-          <span className="w-1 h-1 rounded-full bg-emerald-400" style={{ boxShadow: "0 0 6px #10b981" }} />
-          <span className="font-mono text-xs text-muted-foreground/50">formatter</span>
+          <div className="px-6 flex items-center gap-6 text-[13px] font-bold tracking-wide" style={{ color: C.inkMid }}>
+            <div className="px-6 flex items-center gap-6 text-[13px] font-bold tracking-wide" style={{ color: C.inkMid }}>
+            <a 
+              href="https://digitalheroesco.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hidden sm:inline hover:opacity-70 transition-opacity"
+              style={{ color: C.ink }}
+            >
+              For digitalheroesco.com
+            </a>
+            <span className="text-[18px] opacity-30 select-none hidden sm:inline">|</span>
+            <span className="select-none">Internal Utility TOOL By <span className="text-black text-[17px]"><b>Aryan</b></span></span>
+          </div>
+          </div>
+
+          <div className="pr-1 pl-2">
+            <div
+              className="px-5 py-2 rounded-full text-[13px] font-bold flex items-center gap-2 select-text"
+              style={{
+                backgroundColor: C.surface,
+                border: `1px solid ${C.borderSoft}`,
+                color: C.ink,
+              }}
+            >
+              aryan8kaushik@gmail.com
+            </div>
+          </div>
+          
         </div>
       </nav>
 
-      <div className="mx-auto max-w-6xl h-[80vh] grid grid-cols-2 gap-6">
-
-        {/* LEFT */}
-        <div className="h-full">
-          <TextArea setStandup={setStandup} setKey={setKey} />
-        </div>
-
-        {/* RIGHT */}
-        <div
-          ref={rightRef}
-          className="h-full rounded-xl border border-border/30 bg-muted/5 overflow-y-auto overflow-x-hidden p-5 space-y-4"
+      {/* AGENCY SPINE (Left Vertical Text Area) */}
+      <div 
+        className="hidden lg:flex w-[140px] border-r h-full shrink-0 relative items-center justify-center select-none"
+        style={{ borderColor: C.borderSoft }}
+      >
+        <h1 
+          className="text-[69px] font-black tracking-tighter uppercase whitespace-nowrap" 
+          style={{ 
+            color: C.ink,
+            // Proper vertical text CSS instead of rotation hacks
+            writingMode: 'vertical-rl',
+            transform: 'rotate(180deg)'
+          }}
         >
-          {!standup ? (
-            <Placeholder />
-          ) : (
-            SECTIONS.map((section, i) => {
-              const items = standup[section.key]
-              if (!items || items.length === 0) return null
-              return (
-                <SectionCard
-                  key={`${key}-${section.key}`}
-                  section={section}
-                  items={items}
-                  animKey={key}
-                  delay={i * 150}
-                />
-              )
-            })
-          )}
-        </div>
-
+          We Build <span style={{ color: C.done }}>Standups.</span>
+        </h1>
       </div>
+
+      {/* MAIN 2-COLUMN APP AREA */}
+      <div className="flex-1 px-6 lg:px-12 pt-[120px] pb-10 h-full flex flex-col min-h-0">
+        
+        {/* Equal height grid for both input and output */}
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 h-full min-h-0">
+          
+          {/* LEFT — Input Form */}
+          <div className="h-full">
+            <TextArea setStandup={setStandup} setKey={setKey} loading={loading} setLoading={setLoading} />
+          </div>
+
+          {/* RIGHT — Output Viewer */}
+          <div
+            ref={rightRef}
+            className="h-full overflow-y-auto overflow-x-hidden p-8 shadow-sm hover:shadow-md transition-shadow duration-300"
+            style={{
+              backgroundColor: C.surface,
+              border: `1px solid ${C.border}`,
+              borderRadius: "16px",
+            }}
+          >
+            {loading ? (
+              <LoadingPane />
+            ) : !standup ? (
+              <Placeholder />
+            ) : (
+              <div className="space-y-0">
+                {SECTIONS.map((section) => {
+                  const items = standup[section.key]
+                  if (!items || items.length === 0) return null
+                  const visibleSections = SECTIONS.filter((s) => standup[s.key]?.length > 0)
+                  const isLast = section.key === visibleSections[visibleSections.length - 1]?.key
+                  return (
+                    <SectionBlock
+                      key={`${key}-${section.key}`}
+                      section={section}
+                      items={items}
+                      animKey={key}
+                      isLast={isLast}
+                    />
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+
     </div>
   )
 }
