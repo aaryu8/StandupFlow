@@ -32,12 +32,12 @@ export const TextGenerateEffect = ({
 
   const renderWords = () => {
   return (
-    <motion.div ref={scope} className="flex flex-wrap"> {/* add flex flex-wrap */}
+    <motion.div ref={scope} className="flex flex-wrap"> 
       {wordsArray.map((word, idx) => {
         return (
           <motion.span
             key={word + idx}
-            className="text-black opacity-0 mr-1" // replace the space with mr-1
+            className="text-black opacity-0 mr-1" 
             style={{
               filter: filter ? "blur(10px)" : "none",
             }}

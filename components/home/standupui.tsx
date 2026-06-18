@@ -12,7 +12,7 @@ import React, { useEffect, useRef, useState } from "react"
 import axios from "axios"
 import { TextGenerateEffect } from "../ui/text-generate-effect"
 
-// ─── Palette (Digital Heroes Theme) ──────────────────────────────────────────
+
 const C = {
   canvas:     "#F2F1E8",   
   surface:    "#FFFFFF",   
@@ -28,7 +28,7 @@ const C = {
   blockers:   "#C05746",   
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+
 
 interface StandupData {
   done: string[]
@@ -36,7 +36,7 @@ interface StandupData {
   blockers: string[]
 }
 
-// ─── Section config ───────────────────────────────────────────────────────────
+// ─ Section config 
 
 const SECTIONS: {
   key: keyof StandupData
@@ -100,12 +100,12 @@ const TextArea = ({
   }
 
   return (
-    // Forced h-full on the form so it spans the entire grid row
+
     <form onSubmit={handleSubmit} className="h-full flex flex-col">
       <InputGroup
         className="w-full h-full flex flex-col shadow-sm hover:shadow-md transition-shadow duration-300"
         style={{
-          backgroundColor: C.surface, // Forced white background
+          backgroundColor: C.surface, 
           border: `1px solid ${C.border}`,
           borderRadius: "16px",
           overflow: "hidden",
@@ -140,7 +140,7 @@ const TextArea = ({
           className="flex-1 text-[15px] leading-relaxed resize-none font-medium h-full"
           placeholder={`What did you work on today?\n\n- Fixed login bug\n- Building dashboard component\n- Blocked on API spec`}
           style={{
-            backgroundColor: C.surface, // Hard override for the text area background
+            backgroundColor: C.surface, 
             color: C.ink,
             caretColor: C.done,
             border: "none",
@@ -256,7 +256,7 @@ export const StandupUI = () => {
       className="h-screen w-full flex overflow-hidden relative"
       style={{ 
         backgroundColor: C.canvas,
-        // Aggressively force sans-serif to wipe out the serif font from your screenshot
+       
         fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
       }}
     >
