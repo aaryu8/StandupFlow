@@ -101,9 +101,9 @@ const TextArea = ({
 
   return (
 
-    <form onSubmit={handleSubmit} className="h-full flex flex-col">
+    <form onSubmit={handleSubmit} className="h-full flex flex-col min-h-0">
       <InputGroup
-        className="w-full h-full flex flex-col shadow-sm hover:shadow-md transition-shadow duration-300"
+        className="w-full h-full flex flex-col min-h-0 shadow-sm hover:shadow-md transition-shadow duration-300"
         style={{
           backgroundColor: C.surface, 
           border: `1px solid ${C.border}`,
@@ -137,7 +137,7 @@ const TextArea = ({
         <InputGroupTextarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="flex-1 text-[15px] leading-relaxed resize-none font-medium h-full"
+          className="flex-1 min-h-0 text-[15px] leading-relaxed resize-none font-medium overflow-y-auto"
           placeholder={`What did you work on today?\n\n- Fixed login bug\n- Building dashboard component\n- Blocked on API spec`}
           style={{
             backgroundColor: C.surface, 
@@ -336,7 +336,7 @@ export const StandupUI = () => {
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 h-full min-h-0">
           
           {/* LEFT — Input Form */}
-          <div className="h-full">
+          <div className="h-full min-h-0">
             <TextArea setStandup={setStandup} setKey={setKey} loading={loading} setLoading={setLoading} />
           </div>
 
