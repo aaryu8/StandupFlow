@@ -3,6 +3,13 @@ import { useEffect } from "react";
 import { motion, stagger, useAnimate } from "motion/react";
 import { cn } from "@/lib/utils";
 
+import { Cormorant_Garamond } from "next/font/google";
+
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
 export const TextGenerateEffect = ({
   words,
   className,
@@ -51,12 +58,13 @@ export const TextGenerateEffect = ({
 };
 
   return (
-    <div className={cn("font-bold", className)}>
-      <div className="mt-4">
-        <div className=" dark:text-white text-black text-2xl leading-snug tracking-wide">
+ <div className={cn("", className)}>
+      <div className="font-extrabold">
+        <div className={`${cormorant.className} dark:text-white font-extrabold text-black text-lg leading-snug tracking-wide`}>
           {renderWords()}
         </div>
       </div>
-    </div>
+    </div>   
   );
 };
+
